@@ -29,7 +29,7 @@ namespace PetShopMetrics
             services.AddRazorPages();
             services.AddServerSideBlazor();
             services.AddSingleton<WeatherForecastService>();
-            services.AddHttpClient<MonitoringAPIClient>(client =>
+            services.AddHttpClient<MonitoringAPIClient>("base",client =>
             {
                 client.BaseAddress = new Uri($"{APIConnectionUtils.HostAddress}api/");
             });

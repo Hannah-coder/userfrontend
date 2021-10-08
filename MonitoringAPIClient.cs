@@ -21,10 +21,18 @@ namespace PetShopMetrics
         {
             var response = await _httpClient.GetAsync("MerchandiseFilter");
             response.EnsureSuccessStatusCode();
+            var responseContent = await response.Content.ReadAsAsync<IEnumerable<MerchandiseFilter>>();
+  
+            return responseContent;
+        }
 
+        public async Task<IEnumerable<Session>> GetSessions() 
+        {
+            var response = await _httpClient.GetAsync("Session");
+            response.EnsureSuccessStatusCode();
             using var responseContent = await response.Content.ReadAsStreamAsync();
-            return await JsonSerializer.DeserializeAsync<IEnumerable<MerchandiseFilter>>(responseContent);
 
+            return await JsonSerializer.DeserializeAsync<IEnumerable<Session>>(responseContent);
         }
        
     }

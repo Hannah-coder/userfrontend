@@ -1,12 +1,14 @@
 ﻿@page "/fetchdata"
 @using PetShopMetrics.Models
-@inject MonitoringAPIClient ForecastService
+@using System.Text.Json
+@using System.Text.Json.Serialization;
+@inject MonitoringAPIClient API
 
-<h1>Weather forecast</h1>
+<h1>Merchandise Filter</h1>
 
 <p>This component demonstrates fetching data from a service.</p>
 
-@if (forecasts == null)
+@if (merch == null)
 {
     <p><em>Loading...</em></p>
 }
@@ -15,20 +17,20 @@ else
     <table class="table">
         <thead>
             <tr>
+                <th>Id</th>
+                <th>Category</th>
                 <th>Date</th>
-                <th>Temp. (C)</th>
-                <th>Temp. (F)</th>
-                <th>Summary</th>
+                <th>Items found</th>
             </tr>
         </thead>
         <tbody>
-            @foreach (var forecast in forecasts)
+            @foreach (var item in merch)
             {
                 <tr>
-                    <td>@forecast.Id.ToString()</td>
-                    <td>@forecast.Category</td>
-                    <td>@forecast.DateAndTime</td>
-                    <td>@forecast.NumberRecordsReturned</td>
+                    <td>@item.Id.ToString()</td>
+                    <td>@item.Category</td>
+                    <td>@item.DateAndTime</td>
+                    <td>@item.NumberRecordsReturned</td>
                 </tr>
             }
         </tbody>
@@ -36,10 +38,17 @@ else
 }
 
 @code {
-    private IEnumerable<MerchandiseFilter> forecasts;
+    private IEnumerable<MerchandiseFilter> merch;
+    private IEnumerable<Session> sessions;
 
     protected override async Task OnInitializedAsync()
     {
-        forecasts = await ForecastService.GetMerchandiseFilter();
+        merch = await API.GetMerchandiseFilter();
+    }
+
+    protected async Task GetSessions()
+    {
+        sessions = await API.GetSessions();
+        StateHasChanged();
     }
 }
