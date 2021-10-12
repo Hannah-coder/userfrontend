@@ -7,7 +7,38 @@
 <h1>Merchandise Filter</h1>
 
 <p>This component demonstrates fetching data from a service.</p>
-
+<p>
+    Filter by category
+    <select class="bold backgroundLightBlue" @onchange="@GetMerchandiseByCategory">
+        <option class="bold" value="0">Select a Category</option>
+        <option class="bold" value="All">All</option>
+        <option class="bold" value="Dog">Dog</option>
+        <option class="bold" value="Cat">Cat</option>
+        <option class="bold" value="Bird">Bird</option>
+        <option class="bold" value="Fish">Fish</option>
+        <option class="bold" value="Reptile">Reptile</option>
+        <option class="bold" value="Spider">Spider</option>
+        <option class="bold" value="Other">Other</option>
+    </select>
+</p>
+<p>
+    Filter by Month
+    <select class="bold backgroundLightBlue" @onchange="@GetMerchandiseByMonth">
+        <option class="bold" value="0">Select a Month</option>
+        <option class="bold" value=1>1</option>
+        <option class="bold" value=2>2</option>
+        <option class="bold" value=3>3</option>
+        <option class="bold" value=4>4</option>
+        <option class="bold" value=5>5</option>
+        <option class="bold" value=6>6</option>
+        <option class="bold" value=7>7</option>
+        <option class="bold" value=8>8</option>
+        <option class="bold" value=9>9</option>
+        <option class="bold" value=10>10</option>
+        <option class="bold" value=11>11</option>
+        <option class="bold" value=12>12</option>
+    </select>
+</p>
 @if (merch == null)
 {
     <p><em>Loading...</em></p>
@@ -38,12 +69,30 @@ else
 }
 
 @code {
+
     private IEnumerable<MerchandiseFilter> merch;
     private IEnumerable<Session> sessions;
 
-    protected override async Task OnInitializedAsync()
+    protected async Task GetMerchandise()
     {
         merch = await API.GetMerchandiseFilter();
+        StateHasChanged();
+    }
+
+    protected async Task GetMerchandiseByCategory(ChangeEventArgs e)
+    {
+        if(e.Value.ToString() != "All")
+            merch = await API.GetMerchandiseByCategory(e.Value.ToString());
+        else
+            merch = await API.GetMerchandiseFilter();
+
+        StateHasChanged();
+    }
+
+    protected async Task GetMerchandiseByMonth(ChangeEventArgs e)
+    {
+        merch = await API.GetMerchandiseByMonth(Int32.Parse(e.Value.ToString()));
+        StateHasChanged();
     }
 
     protected async Task GetSessions()
