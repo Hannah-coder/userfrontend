@@ -55,6 +55,16 @@ namespace PetShopMetrics
             return list.Count();
         }
 
+        public async Task<IEnumerable<MerchandiseFilter>> GetMerchandiseByValueAndTimeSpan(string category, DateTime start, DateTime end) 
+        {
+            var response = await _httpClient.GetAsync($"MerchandiseFilter/ByCategory/{category}");
+            response.EnsureSuccessStatusCode();
+           
+            var responseContent = await response.Content.ReadAsAsync<IEnumerable<MerchandiseFilter>>();
+            
+            return responseContent.ToList().Where(x => x.DateAndTime > start && x.DateAndTime < end);
+        }
+
         /////////////////////////////////////////////////////////// Session //////////////////////////////////////////////
 
         public async Task<IEnumerable<Session>> GetSessions() 
