@@ -17,13 +17,20 @@ namespace PetShopMetrics
             _httpClient = client;
         }
 
-///////////////////////////////////////////////////// MerchandiseFilter /////////////////////////////////////////
-        
+        ///////////////////////////////////////////////////// MerchandiseFilter /////////////////////////////////////////
+
+        public async Task<IEnumerable<string>> GetDistinctCategories()
+        {
+            var response = await _httpClient.GetAsync("MerchandiseFilter/Categories");
+            response.EnsureSuccessStatusCode();
+
+            return await response.Content.ReadAsAsync<IEnumerable<string>>();
+        }
+
         public async Task<IEnumerable<MerchandiseFilter>> GetMerchandiseFilter() 
         {
             var response = await _httpClient.GetAsync("MerchandiseFilter");
             response.EnsureSuccessStatusCode();
-            //var responseContent = await response.Content.ReadAsAsync<IEnumerable<MerchandiseFilter>>();
   
             return await response.Content.ReadAsAsync<IEnumerable<MerchandiseFilter>>();
         }

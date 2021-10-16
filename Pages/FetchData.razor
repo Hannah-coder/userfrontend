@@ -1,7 +1,9 @@
 ﻿@page "/fetchdata"
 @using PetShopMetrics.Models
 @using System.Text.Json
-@using System.Text.Json.Serialization;
+@using System.Text.Json.Serialization
+@using ChartJs.Blazor.PieChart
+@using System.Drawing
 @inject MonitoringAPIClient API
 
 <h1>Merchandise Filter</h1>
@@ -11,14 +13,13 @@
     Filter by category
     <select class="bold backgroundLightBlue" @onchange="@GetMerchandiseByCategory">
         <option class="bold" value="0">Select a Category</option>
-        <option class="bold" value="All">All</option>
-        <option class="bold" value="Dog">Dog</option>
-        <option class="bold" value="Cat">Cat</option>
-        <option class="bold" value="Bird">Bird</option>
-        <option class="bold" value="Fish">Fish</option>
-        <option class="bold" value="Reptile">Reptile</option>
-        <option class="bold" value="Spider">Spider</option>
-        <option class="bold" value="Other">Other</option>
+        @if (categories != null)
+        {
+            @foreach (var c in categories)
+            {
+                <option class="bold" value=@c>@c</option>
+            }
+        }
     </select>
 </p>
 <p>
@@ -39,9 +40,11 @@
         <option class="bold" value=12>12</option>
     </select>
 </p>
+<Chart Config="_config"></Chart>
+
 @if (merch == null)
 {
-  
+
 }
 else
 {
@@ -66,12 +69,57 @@ else
             }
         </tbody>
     </table>
+    @foreach (var x in totals) 
+    {
+        x.ToString();
+    }
 }
 
 @code {
 
     private IEnumerable<MerchandiseFilter> merch;
+    private IEnumerable<string> categories;
     private IEnumerable<Session> sessions;
+    private int[] totals;
+    private PieConfig _config;
+
+    protected override async void OnInitialized()
+    {
+
+        _config = new PieConfig
+        {
+            Options = new PieOptions
+            {
+                Responsive = true,
+                Title = new OptionsTitle
+                {
+                    Display = true,
+                    Text = "Merchandise searched by category"
+                }
+            }
+        };
+
+        foreach (string color in new[] { "Red", "Yellow", "Green", "Blue" })
+        {
+            _config.Data.Labels.Add(color);
+        }
+
+        PieDataset<int> dataset = new PieDataset<int>(new[] { 6, 5, 3, 7 })
+        {
+            BackgroundColor = new[]
+            {
+            ColorUtil.ColorHexString(255, 99, 132), // Slice 1 aka "Red"
+            ColorUtil.ColorHexString(255, 205, 86), // Slice 2 aka "Yellow"
+            ColorUtil.ColorHexString(75, 192, 192), // Slice 3 aka "Green"
+            ColorUtil.ColorHexString(54, 162, 235), // Slice 4 aka "Blue"
+        }
+        };
+
+        _config.Data.Datasets.Add(dataset);
+        categories = await API.GetDistinctCategories();
+        await GetItemsFoundPerCategory();
+        StateHasChanged();
+    }
 
     protected async Task GetMerchandise()
     {
@@ -81,7 +129,7 @@ else
 
     protected async Task GetMerchandiseByCategory(ChangeEventArgs e)
     {
-        if(e.Value.ToString() != "All")
+        if (e.Value.ToString() != "All")
             merch = await API.GetMerchandiseByCategory(e.Value.ToString());
         else
             merch = await API.GetMerchandiseFilter();
@@ -95,9 +143,21 @@ else
         StateHasChanged();
     }
 
-    protected async Task GetSessions()
+    protected async Task GetItemsFoundPerCategory()
     {
-        sessions = await API.GetSessions();
-        StateHasChanged();
+        var merchandise = from c in merch.AsQueryable()
+                          group c by c.Category into avg
+                          select new
+                          {
+                              Category = avg.Key,
+                              Total = avg.Sum(x => x.NumberRecordsReturned),
+                          };
+        int i = 0;
+        merchandise = merchandise.OrderBy(x => x.Category);
+        foreach (var x in merchandise)
+        {
+            totals[i] = x.Total;
+            i++;
+        }
     }
 }
