@@ -42,7 +42,7 @@ namespace PetShopMetrics
 
             return await response.Content.ReadAsAsync<IEnumerable<MerchandiseFilter>>();
         }
-
+        
         public async Task<IEnumerable<MerchandiseFilter>> GetMerchandiseByMonth(int month)
         {
             var response = await _httpClient.GetAsync($"MerchandiseFilter/ByMonth/{month}");

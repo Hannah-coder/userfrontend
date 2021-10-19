@@ -13,6 +13,7 @@
     Filter by category
     <select class="bold backgroundLightBlue" @onchange="@GetMerchandiseByCategory">
         <option class="bold" value="0">Select a Category</option>
+        <option class="bold" value="All">All</option>
         @if (categories != null)
         {
             @foreach (var c in categories)
@@ -40,7 +41,11 @@
         <option class="bold" value=12>12</option>
     </select>
 </p>
-<Chart Config="_config"></Chart>
+
+@if (_config != null)
+{
+    <Chart Config="_config" @ref="_chart"></Chart>
+}
 
 @if (merch == null)
 {
@@ -69,23 +74,32 @@ else
             }
         </tbody>
     </table>
-    @foreach (var x in totals) 
-    {
-        x.ToString();
-    }
+
 }
 
 @code {
 
     private IEnumerable<MerchandiseFilter> merch;
     private IEnumerable<string> categories;
+    private List<string> currentSelection = new();
     private IEnumerable<Session> sessions;
     private int[] totals;
     private PieConfig _config;
+    private Chart _chart;
+    private PieDataset<int> dataset;
 
     protected override async void OnInitialized()
     {
+        categories = await API.GetDistinctCategories();
+        await GetMerchandise();
+        totals = GetItemsFoundPerCategory(categories.ToList());
+        DrawPieChart(totals, "", categories.ToList());
 
+        StateHasChanged();
+    }
+
+    protected void DrawPieChart(int[] data, string title, List<string> labels)
+    {
         _config = new PieConfig
         {
             Options = new PieOptions
@@ -94,48 +108,89 @@ else
                 Title = new OptionsTitle
                 {
                     Display = true,
-                    Text = "Merchandise searched by category"
+                    Text = "Merchandise items returned by searches"
                 }
             }
         };
 
-        foreach (string color in new[] { "Red", "Yellow", "Green", "Blue" })
+        foreach (string c in labels)
         {
-            _config.Data.Labels.Add(color);
+            _config.Data.Labels.Add(c);
         }
 
-        PieDataset<int> dataset = new PieDataset<int>(new[] { 6, 5, 3, 7 })
+        dataset = new PieDataset<int>(data)
         {
             BackgroundColor = new[]
             {
-            ColorUtil.ColorHexString(255, 99, 132), // Slice 1 aka "Red"
-            ColorUtil.ColorHexString(255, 205, 86), // Slice 2 aka "Yellow"
-            ColorUtil.ColorHexString(75, 192, 192), // Slice 3 aka "Green"
-            ColorUtil.ColorHexString(54, 162, 235), // Slice 4 aka "Blue"
-        }
+            ColorUtil.ColorHexString(255, 99, 132),
+            ColorUtil.ColorHexString(255, 205, 86),
+            ColorUtil.ColorHexString(75, 192, 192),
+            ColorUtil.ColorHexString(54, 162, 235),
+            ColorUtil.ColorHexString(54, 162, 0),
+            ColorUtil.ColorHexString(54, 0, 235),
+            ColorUtil.ColorHexString(0, 162, 235),
+            ColorUtil.ColorHexString(54, 20, 0),
+            ColorUtil.ColorHexString(0, 20, 235),
+            }
         };
 
         _config.Data.Datasets.Add(dataset);
-        categories = await API.GetDistinctCategories();
-        await GetItemsFoundPerCategory();
-        StateHasChanged();
     }
+
 
     protected async Task GetMerchandise()
     {
         merch = await API.GetMerchandiseFilter();
+        totals = GetItemsFoundPerCategory(categories.ToList());
         StateHasChanged();
+    }
+
+    protected async Task PopulateGraph()
+    {
+        string[] colors = new string[currentSelection.Count()];
+        for (int i = 0; i < colors.Length; i++)
+        {
+            colors[i] = ColorUtil.RandomColorString();
+        }
+
+        totals = GetItemsFoundPerCategory(currentSelection);
+
+        dataset = new PieDataset<int>(totals)
+        {
+            BackgroundColor = colors
+        };
+
+        _config.Data.Datasets.Clear();
+        _config.Data.Datasets.Add(dataset);
+        _config.Data.Labels.Clear();
+
+        foreach (string c in currentSelection)
+        {
+            _config.Data.Labels.Add(c);
+        }
+
+        await _chart.Update();
     }
 
     protected async Task GetMerchandiseByCategory(ChangeEventArgs e)
     {
         if (e.Value.ToString() != "All")
+        {
             merch = await API.GetMerchandiseByCategory(e.Value.ToString());
+            currentSelection.Clear();
+            currentSelection.Add(e.Value.ToString());
+            await PopulateGraph();
+        }
         else
+        {
             merch = await API.GetMerchandiseFilter();
+            currentSelection = categories.ToList();
+            await PopulateGraph();
+        }
 
         StateHasChanged();
     }
+
 
     protected async Task GetMerchandiseByMonth(ChangeEventArgs e)
     {
@@ -143,21 +198,35 @@ else
         StateHasChanged();
     }
 
-    protected async Task GetItemsFoundPerCategory()
+
+    protected int[] GetItemsFoundPerCategory(List<string> list)
     {
-        var merchandise = from c in merch.AsQueryable()
-                          group c by c.Category into avg
-                          select new
-                          {
-                              Category = avg.Key,
-                              Total = avg.Sum(x => x.NumberRecordsReturned),
-                          };
         int i = 0;
-        merchandise = merchandise.OrderBy(x => x.Category);
-        foreach (var x in merchandise)
+        int[] sums = new int[list.Count()];
+
+        foreach (var c in list)
         {
-            totals[i] = x.Total;
+            var categoryList = merch.ToList().Where(x => x.Category == c);
+            sums[i] = categoryList.Sum(x => x.NumberRecordsReturned);
             i++;
         }
+
+        return sums;
     }
+
+
+    protected int[] GetCategorySearchCount(List<string> list)
+    {
+        int i = 0;
+        int[] sums = new int[list.Count()];
+        foreach (var c in list)
+        {
+            var categoryList = merch.ToList().Where(x => x.Category == c);
+            sums[i] = categoryList.Count();
+            i++;
+        }
+
+        return sums;
+    }
+
 }
