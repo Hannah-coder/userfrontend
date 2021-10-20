@@ -6,13 +6,12 @@
 @using System.Drawing
 @inject MonitoringAPIClient API
 
-<h1>Merchandise Filter</h1>
+<h1>Merchandise Filter and Chart Demonstration</h1>
 
 <p>This component demonstrates fetching data from a service.</p>
 <p>
     Filter by category
     <select class="bold backgroundLightBlue" @onchange="@GetMerchandiseByCategory">
-        <option class="bold" value="0">Select a Category</option>
         <option class="bold" value="All">All</option>
         @if (categories != null)
         {
@@ -42,12 +41,22 @@
     </select>
 </p>
 
-@if (_config != null)
+<p>
+<button class="btn btn-success boldBrownButton" @onclick="ShowGraph">Show Graph</button>
+<button class="btn btn-success boldBrownButton" @onclick="HideGraph">Hide Graph</button>
+</p>
+
+@if (_config != null && showTable == true)
 {
     <Chart Config="_config" @ref="_chart"></Chart>
 }
 
-@if (merch == null)
+<p>
+<button class="btn btn-success boldBrownButton" @onclick="ShowRawData">Show Raw Data</button>
+<button class="btn btn-success boldBrownButton" @onclick="HideRawData">Hide Raw Data</button>
+</p>
+
+@if (showRawData == false)
 {
 
 }
@@ -74,15 +83,53 @@ else
             }
         </tbody>
     </table>
-
 }
 
+<button class="btn btn-success boldBrownButton" @onclick="GetItemsFoundPerSearches">Show Search Data</button>
+<button class="btn btn-success boldBrownButton" @onclick="HideSearchData">Hide Search Data</button>
+
+@if (showSearchData == false)
+{
+
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Times Searched</th>
+                <th>Total Items Found</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in tableList)
+            {
+                <tr>
+                    <td>@item.searchType</td>
+                    <td>@item.searchCount</td>
+                    <td>@item.countFound</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+}
 @code {
 
+    public struct returnPerSearch
+    {
+        public string searchType;
+        public int searchCount;
+        public int countFound;
+    }
+    private bool showRawData = false;
+    private bool showTable = false;
+    private bool showSearchData = false;
+    private List<returnPerSearch> tableList;
     private IEnumerable<MerchandiseFilter> merch;
     private IEnumerable<string> categories;
     private List<string> currentSelection = new();
-    private IEnumerable<Session> sessions;
     private int[] totals;
     private PieConfig _config;
     private Chart _chart;
@@ -91,6 +138,7 @@ else
     protected override async void OnInitialized()
     {
         categories = await API.GetDistinctCategories();
+        currentSelection = categories.ToList();
         await GetMerchandise();
         totals = GetItemsFoundPerCategory(categories.ToList());
         DrawPieChart(totals, "", categories.ToList());
@@ -137,7 +185,6 @@ else
         _config.Data.Datasets.Add(dataset);
     }
 
-
     protected async Task GetMerchandise()
     {
         merch = await API.GetMerchandiseFilter();
@@ -169,7 +216,10 @@ else
             _config.Data.Labels.Add(c);
         }
 
-        await _chart.Update();
+        if(_chart != null)
+            await _chart.Update();
+
+        StateHasChanged();
     }
 
     protected async Task GetMerchandiseByCategory(ChangeEventArgs e)
@@ -179,25 +229,25 @@ else
             merch = await API.GetMerchandiseByCategory(e.Value.ToString());
             currentSelection.Clear();
             currentSelection.Add(e.Value.ToString());
+            GetItemsFoundPerSearches();
             await PopulateGraph();
         }
         else
         {
             merch = await API.GetMerchandiseFilter();
             currentSelection = categories.ToList();
+            GetItemsFoundPerSearches();
             await PopulateGraph();
         }
 
         StateHasChanged();
     }
 
-
     protected async Task GetMerchandiseByMonth(ChangeEventArgs e)
     {
         merch = await API.GetMerchandiseByMonth(Int32.Parse(e.Value.ToString()));
         StateHasChanged();
     }
-
 
     protected int[] GetItemsFoundPerCategory(List<string> list)
     {
@@ -214,6 +264,53 @@ else
         return sums;
     }
 
+    protected void GetItemsFoundPerSearches()
+    {
+        tableList = new List<returnPerSearch>();
+        returnPerSearch ret;
+
+        foreach (string c in currentSelection)
+        {
+            ret.searchType = c;
+            var categoryList = merch.ToList().Where(x => x.Category == c);
+            ret.searchCount = categoryList.Count();
+            ret.countFound = categoryList.Sum(x => x.NumberRecordsReturned);
+            tableList.Add(ret);
+        }
+
+        showSearchData = true;
+        StateHasChanged();
+    }
+
+    protected void HideSearchData()
+    {
+        showSearchData = false;
+        StateHasChanged();
+    }
+
+    protected void ShowGraph()
+    {
+        if (_chart != null)
+            _chart.Update();
+
+        showTable = true;
+        StateHasChanged();
+    }
+
+    protected void HideGraph()
+    {
+        showTable = false;
+    }
+
+    protected void ShowRawData()
+    {
+        showRawData = true;
+    }
+
+    protected void HideRawData()
+    {
+        showRawData = false;
+    }
 
     protected int[] GetCategorySearchCount(List<string> list)
     {
