@@ -85,7 +85,7 @@ else
     </table>
 }
 
-<button class="btn btn-success boldBrownButton" @onclick="GetItemsFoundPerSearches">Show Search Data</button>
+<button class="btn btn-success boldBrownButton" @onclick="ShowSearchData">Show Search Data</button>
 <button class="btn btn-success boldBrownButton" @onclick="HideSearchData">Hide Search Data</button>
 
 @if (showSearchData == false)
@@ -141,6 +141,7 @@ else
         currentSelection = categories.ToList();
         await GetMerchandise();
         totals = GetItemsFoundPerCategory(categories.ToList());
+        GetItemsFoundPerSearches();
         DrawPieChart(totals, "", categories.ToList());
 
         StateHasChanged();
@@ -278,10 +279,13 @@ else
             tableList.Add(ret);
         }
 
+        StateHasChanged();
+    }
+    protected void ShowSearchData()
+    {
         showSearchData = true;
         StateHasChanged();
     }
-
     protected void HideSearchData()
     {
         showSearchData = false;
@@ -305,11 +309,13 @@ else
     protected void ShowRawData()
     {
         showRawData = true;
+        StateHasChanged();
     }
 
     protected void HideRawData()
     {
         showRawData = false;
+        StateHasChanged();
     }
 
     protected int[] GetCategorySearchCount(List<string> list)
