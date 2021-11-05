@@ -281,12 +281,10 @@ else
 
         StateHasChanged();
     }
-
     protected void ShowSearchData()
     {
         showSearchData = true;
     }
-
     protected void HideSearchData()
     {
         showSearchData = false;
@@ -309,11 +307,13 @@ else
     protected void ShowRawData()
     {
         showRawData = true;
+        StateHasChanged();
     }
 
     protected void HideRawData()
     {
         showRawData = false;
+        StateHasChanged();
     }
 
     protected int[] GetCategorySearchCount(List<string> list)
