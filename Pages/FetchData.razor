@@ -1,9 +1,6 @@
 ﻿@page "/fetchdata"
 @using PetShopMetrics.Models
-@using System.Text.Json
-@using System.Text.Json.Serialization
 @using ChartJs.Blazor.PieChart
-@using System.Drawing
 @inject MonitoringAPIClient API
 
 <h1>Merchandise Filter and Chart Demonstration</h1>
@@ -123,6 +120,7 @@ else
         public int searchCount;
         public int countFound;
     }
+
     private bool showRawData = false;
     private bool showTable = false;
     private bool showSearchData = false;
