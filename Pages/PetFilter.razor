@@ -1,5 +1,23 @@
-﻿<h3>PetFilter</h3>
+﻿@page "/petfilter"
+@inject MonitoringAPIClient API
+
+<h3>Pet Filter</h3>
+<p>This component demonstrates fetching of pet filter metrics.</p>
 
 @code {
+    /*
+     * Filter Criteria => Value
+     * Filter Criterias: Category, Breed, Age, Gender
+     * Values: null, Male, Female, Bird, Fish, Reptile, Cat, Dog
+     *
+     * {
+     * "id": 34,
+     * "value": "African Grey",
+     * "filterCriteria": "Breed",
+     * "dateAndTime": "2021-10-20T15:56:54",
+     * "numberRecordsReturned": 1
+     * }
+     *
+     */
 
 }
