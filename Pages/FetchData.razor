@@ -41,29 +41,9 @@
 </p>
 
 <p>
-    <button class="btn btn-success boldBrownButton" @onclick="ShowGraph">Show Graph</button>
+    <button class="btn btn-success boldBrownButton" @onclick="ShowGraph">Show Graph</button> &nbsp &nbsp &nbsp
     <button class="btn btn-success boldBrownButton" @onclick="HideGraph">Hide Graph</button>
 </p>
-
-<div class="container">
-    <div class="row">
-        <div class="col-sm-12 my-5">
-            <RadzenChart>
-                <RadzenLineSeries Smooth=false Data="@Dogs" CategoryProperty="DateAndTime" Title="Dogs" LineType="LineType.Dashed" ValueProperty="NumberRecordsReturned">
-                    <RadzenMarkers MarkerType="MarkerType.Circle" />
-                </RadzenLineSeries>
-                <RadzenLineSeries Smooth=false Data="@Cats" CategoryProperty="DateAndTime" Title="Cats" ValueProperty="NumberRecordsReturned">
-                    <RadzenMarkers MarkerType="MarkerType.Circle" />
-                </RadzenLineSeries>
-                <RadzenCategoryAxis Padding="20" FormatString="{0:D:H:mm:ss}" />
-                <RadzenValueAxis Formatter="@FormatAsCount">
-                    <RadzenGridLines Visible="true" />
-                    <RadzenAxisTitle Text="Search Count" />
-                </RadzenValueAxis>
-            </RadzenChart>
-        </div>
-    </div>
-</div>
 
 @if (_config != null && showTable == true)
 {
@@ -71,7 +51,7 @@
 }
 
 <p>
-    <button class="btn btn-success boldBrownButton" @onclick="ShowRawData">Show Raw Data</button>
+    <button class="btn btn-success boldBrownButton" @onclick="ShowRawData">Show Raw Data</button> &nbsp &nbsp &nbsp
     <button class="btn btn-success boldBrownButton" @onclick="HideRawData">Hide Raw Data</button>
 </p>
 
@@ -104,7 +84,7 @@ else
     </table>
 }
 
-<button class="btn btn-success boldBrownButton" @onclick="ShowSearchData">Show Search Data</button>
+<button class="btn btn-success boldBrownButton" @onclick="ShowSearchData">Show Search Data</button> &nbsp &nbsp &nbsp
 <button class="btn btn-success boldBrownButton" @onclick="HideSearchData">Hide Search Data</button>
 
 @if (showSearchData == false)
@@ -132,8 +112,26 @@ else
             }
         </tbody>
     </table>
-
 }
+<div class="container">
+    <div class="row">
+        <div class="col-sm-12 my-5">
+            <RadzenChart>
+                <RadzenLineSeries Smooth=false Data="@Dogs" CategoryProperty="DateAndTime" Title="Dogs" LineType="LineType.Dashed" ValueProperty="NumberRecordsReturned">
+                    <RadzenMarkers MarkerType="MarkerType.Circle" />
+                </RadzenLineSeries>
+                <RadzenLineSeries Smooth=false Data="@Cats" CategoryProperty="DateAndTime" Title="Cats" ValueProperty="NumberRecordsReturned">
+                    <RadzenMarkers MarkerType="MarkerType.Circle" />
+                </RadzenLineSeries>
+                <RadzenCategoryAxis Padding="20" FormatString="{0:D:H:mm:ss}" />
+                <RadzenValueAxis Formatter="@FormatAsCount">
+                    <RadzenGridLines Visible="true" />
+                    <RadzenAxisTitle Text="Search Count" />
+                </RadzenValueAxis>
+            </RadzenChart>
+        </div>
+    </div>
+</div>
 
 @code {
 
@@ -318,12 +316,12 @@ else
 
         StateHasChanged();
     }
-    
+
     protected void ShowSearchData()
     {
         showSearchData = true;
     }
-    
+
     protected void HideSearchData()
     {
         showSearchData = false;

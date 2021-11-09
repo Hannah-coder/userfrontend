@@ -142,9 +142,30 @@ namespace PetShopMetrics
             return list.Count();
         }
 
-        public async Task<IEnumerable<PetFilter>> GetPetFilterByValueAndTimeSpan(string criteria, DateTime start, DateTime end)
+        public async Task<int> GetPetFilterSearchCountByMonthAndValue(int month, string value)
+        {
+            var response = await _httpClient.GetAsync($"PetFilter/ByMonth/{month}");
+            response.EnsureSuccessStatusCode();
+
+            var responseContent = await response.Content.ReadAsAsync<IEnumerable<PetFilter>>();
+            IEnumerable<PetFilter> list = responseContent.ToList().Where(x => x.Value == value);
+
+            return list.Count();
+        }
+
+        public async Task<IEnumerable<PetFilter>> GetPetFilterByCriteriaAndTimeSpan(string criteria, DateTime start, DateTime end)
         {
             var response = await _httpClient.GetAsync($"PetFilter/ByCriteria/{criteria}");
+            response.EnsureSuccessStatusCode();
+
+            var responseContent = await response.Content.ReadAsAsync<IEnumerable<PetFilter>>();
+
+            return responseContent.ToList().Where(x => x.DateAndTime.Date >= start.Date && x.DateAndTime.Date <= end.Date);
+        }
+
+        public async Task<IEnumerable<PetFilter>> GetPetFilterByValueAndTimeSpan(string value, DateTime start, DateTime end)
+        {
+            var response = await _httpClient.GetAsync($"PetFilter/ByValue/{value}");
             response.EnsureSuccessStatusCode();
 
             var responseContent = await response.Content.ReadAsAsync<IEnumerable<PetFilter>>();
