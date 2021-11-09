@@ -81,5 +81,10 @@ namespace PetShopMetrics
             return await response.Content.ReadAsAsync<IEnumerable<Session>>();
         }
 
+        ////////////////////////////////////////////////////////// PetFilter /////////////////////////////////////////////
+        
+
+
+
     }
 }

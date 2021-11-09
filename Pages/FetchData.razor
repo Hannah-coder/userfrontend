@@ -1,6 +1,8 @@
 ﻿@page "/fetchdata"
 @using PetShopMetrics.Models
 @using ChartJs.Blazor.PieChart
+@using System.Globalization
+@using Radzen.Blazor
 @inject MonitoringAPIClient API
 
 <h1>Merchandise Filter and Chart Demonstration</h1>
@@ -39,9 +41,29 @@
 </p>
 
 <p>
-<button class="btn btn-success boldBrownButton" @onclick="ShowGraph">Show Graph</button>
-<button class="btn btn-success boldBrownButton" @onclick="HideGraph">Hide Graph</button>
+    <button class="btn btn-success boldBrownButton" @onclick="ShowGraph">Show Graph</button>
+    <button class="btn btn-success boldBrownButton" @onclick="HideGraph">Hide Graph</button>
 </p>
+
+<div class="container">
+    <div class="row">
+        <div class="col-sm-12 my-5">
+            <RadzenChart>
+                <RadzenLineSeries Smooth=false Data="@Dogs" CategoryProperty="DateAndTime" Title="Dogs" LineType="LineType.Dashed" ValueProperty="NumberRecordsReturned">
+                    <RadzenMarkers MarkerType="MarkerType.Circle" />
+                </RadzenLineSeries>
+                <RadzenLineSeries Smooth=false Data="@Cats" CategoryProperty="DateAndTime" Title="Cats" ValueProperty="NumberRecordsReturned">
+                    <RadzenMarkers MarkerType="MarkerType.Circle" />
+                </RadzenLineSeries>
+                <RadzenCategoryAxis Padding="20" FormatString="{0:D:H:mm:ss}" />
+                <RadzenValueAxis Formatter="@FormatAsCount">
+                    <RadzenGridLines Visible="true" />
+                    <RadzenAxisTitle Text="Search Count" />
+                </RadzenValueAxis>
+            </RadzenChart>
+        </div>
+    </div>
+</div>
 
 @if (_config != null && showTable == true)
 {
@@ -49,8 +71,8 @@
 }
 
 <p>
-<button class="btn btn-success boldBrownButton" @onclick="ShowRawData">Show Raw Data</button>
-<button class="btn btn-success boldBrownButton" @onclick="HideRawData">Hide Raw Data</button>
+    <button class="btn btn-success boldBrownButton" @onclick="ShowRawData">Show Raw Data</button>
+    <button class="btn btn-success boldBrownButton" @onclick="HideRawData">Hide Raw Data</button>
 </p>
 
 @if (showRawData == false)
@@ -112,6 +134,7 @@ else
     </table>
 
 }
+
 @code {
 
     public struct returnPerSearch
@@ -124,9 +147,13 @@ else
     private bool showRawData = false;
     private bool showTable = false;
     private bool showSearchData = false;
+
     private List<returnPerSearch> tableList;
+
     private IEnumerable<MerchandiseFilter> merch;
     private IEnumerable<string> categories;
+    private IEnumerable<MerchandiseFilter> Dogs;
+    private IEnumerable<MerchandiseFilter> Cats;
     private List<string> currentSelection = new();
     private int[] totals;
     private PieConfig _config;
@@ -141,8 +168,13 @@ else
         totals = GetItemsFoundPerCategory(categories.ToList());
         GetItemsFoundPerSearches();
         DrawPieChart(totals, "", categories.ToList());
-
+        await GetLineChartData();
         StateHasChanged();
+    }
+
+    string FormatAsCount(object value)
+    {
+        return ((double)value).ToString();
     }
 
     protected void DrawPieChart(int[] data, string title, List<string> labels)
@@ -191,6 +223,13 @@ else
         StateHasChanged();
     }
 
+    protected async Task GetLineChartData()
+    {
+        Dogs = await API.GetMerchandiseByCategory("Dog");
+        Cats = await API.GetMerchandiseByCategory("Cat");
+        StateHasChanged();
+    }
+
     protected async Task PopulateGraph()
     {
         string[] colors = new string[currentSelection.Count()];
@@ -215,7 +254,7 @@ else
             _config.Data.Labels.Add(c);
         }
 
-        if(_chart != null)
+        if (_chart != null)
             await _chart.Update();
 
         StateHasChanged();
@@ -279,10 +318,12 @@ else
 
         StateHasChanged();
     }
+    
     protected void ShowSearchData()
     {
         showSearchData = true;
     }
+    
     protected void HideSearchData()
     {
         showSearchData = false;
