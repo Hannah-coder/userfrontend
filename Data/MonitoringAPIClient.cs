@@ -99,6 +99,15 @@ namespace PetShopMetrics
             return await response.Content.ReadAsAsync<IEnumerable<string>>();
         }
 
+        public async Task<IEnumerable<string>> GetDistinctPetFilterBreed()
+        {
+            var response = await _httpClient.GetAsync("PetFilter/DistinctBreed");
+            response.EnsureSuccessStatusCode();
+
+            return await response.Content.ReadAsAsync<IEnumerable<string>>();
+        }
+
+
         public async Task<IEnumerable<PetFilter>> GetPetFilter()
         {
             var response = await _httpClient.GetAsync("PetFilter");

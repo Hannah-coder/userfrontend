@@ -40,19 +40,32 @@
      *
      */
     IEnumerable<string> petCriterias = new List<string>();
-    IEnumerable<string> values = new List<string>();
+    List<string> values = new List<string>();
 
     protected override async void OnInitialized()
     {
-        await GetPetCriteria();
-        values = await API.GetDistinctPetFilterValues();
+        petCriterias = await API.GetDistinctPetFilterCriteria();
         StateHasChanged();
     }
 
-    protected async Task GetPetCriteria()
+    protected async Task GetPetCriteria(ChangeEventArgs e)
     {
-        petCriterias = await API.GetDistinctPetFilterCriteria();
-
-
+        if (e.Value.ToString() == "Gender")
+        {
+            values.Clear();
+            values.Add("Male");
+            values.Add("Female");
+        }
+        if (e.Value.ToString() == "Category")
+        {
+            var list = await API.GetDistinctCategories();
+            values = list.ToList();
+        }
+        if (e.Value.ToString() == "Breed")
+        {
+            var list = await API.GetDistinctPetFilterBreed();
+            values = list.ToList();
+        }
+        //values = await API.GetDistinctPetFilterValues();
     }
 }
