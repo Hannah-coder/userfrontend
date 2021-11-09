@@ -1,24 +1,24 @@
 ﻿@page "/fetchdata"
 @using PetShopMetrics.Models
-@using System.Text.Json
-@using System.Text.Json.Serialization;
+@using ChartJs.Blazor.PieChart
+@using System.Globalization
+@using Radzen.Blazor
 @inject MonitoringAPIClient API
 
-<h1>Merchandise Filter</h1>
+<h1>Merchandise Filter and Chart Demonstration</h1>
 
 <p>This component demonstrates fetching data from a service.</p>
 <p>
     Filter by category
     <select class="bold backgroundLightBlue" @onchange="@GetMerchandiseByCategory">
-        <option class="bold" value="0">Select a Category</option>
         <option class="bold" value="All">All</option>
-        <option class="bold" value="Dog">Dog</option>
-        <option class="bold" value="Cat">Cat</option>
-        <option class="bold" value="Bird">Bird</option>
-        <option class="bold" value="Fish">Fish</option>
-        <option class="bold" value="Reptile">Reptile</option>
-        <option class="bold" value="Spider">Spider</option>
-        <option class="bold" value="Other">Other</option>
+        @if (categories != null)
+        {
+            @foreach (var c in categories)
+            {
+                <option class="bold" value=@c>@c</option>
+            }
+        }
     </select>
 </p>
 <p>
@@ -39,9 +39,25 @@
         <option class="bold" value=12>12</option>
     </select>
 </p>
-@if (merch == null)
+
+<p>
+    <button class="btn btn-success boldBrownButton" @onclick="ShowGraph">Show Graph</button> &nbsp &nbsp &nbsp
+    <button class="btn btn-success boldBrownButton" @onclick="HideGraph">Hide Graph</button>
+</p>
+
+@if (_config != null && showTable == true)
 {
-  
+    <Chart Config="_config" @ref="_chart"></Chart>
+}
+
+<p>
+    <button class="btn btn-success boldBrownButton" @onclick="ShowRawData">Show Raw Data</button> &nbsp &nbsp &nbsp
+    <button class="btn btn-success boldBrownButton" @onclick="HideRawData">Hide Raw Data</button>
+</p>
+
+@if (showRawData == false)
+{
+
 }
 else
 {
@@ -68,23 +84,197 @@ else
     </table>
 }
 
+<button class="btn btn-success boldBrownButton" @onclick="ShowSearchData">Show Search Data</button> &nbsp &nbsp &nbsp
+<button class="btn btn-success boldBrownButton" @onclick="HideSearchData">Hide Search Data</button>
+
+@if (showSearchData == false)
+{
+
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Times Searched</th>
+                <th>Total Items Found</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in tableList)
+            {
+                <tr>
+                    <td>@item.searchType</td>
+                    <td>@item.searchCount</td>
+                    <td>@item.countFound</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+<div class="container">
+    <div class="row">
+        <div class="col-sm-12 my-5">
+            <RadzenChart>
+                <RadzenLineSeries Smooth=false Data="@Dogs" CategoryProperty="DateAndTime" Title="Dogs" LineType="LineType.Dashed" ValueProperty="NumberRecordsReturned">
+                    <RadzenMarkers MarkerType="MarkerType.Circle" />
+                </RadzenLineSeries>
+                <RadzenLineSeries Smooth=false Data="@Cats" CategoryProperty="DateAndTime" Title="Cats" ValueProperty="NumberRecordsReturned">
+                    <RadzenMarkers MarkerType="MarkerType.Circle" />
+                </RadzenLineSeries>
+                <RadzenCategoryAxis Padding="20" FormatString="{0:D:H:mm:ss}" />
+                <RadzenValueAxis Formatter="@FormatAsCount">
+                    <RadzenGridLines Visible="true" />
+                    <RadzenAxisTitle Text="Search Count" />
+                </RadzenValueAxis>
+            </RadzenChart>
+        </div>
+    </div>
+</div>
+
 @code {
 
+    public struct returnPerSearch
+    {
+        public string searchType;
+        public int searchCount;
+        public int countFound;
+    }
+
+    private bool showRawData = false;
+    private bool showTable = false;
+    private bool showSearchData = false;
+
+    private List<returnPerSearch> tableList;
+
     private IEnumerable<MerchandiseFilter> merch;
-    private IEnumerable<Session> sessions;
+    private IEnumerable<string> categories;
+    private IEnumerable<MerchandiseFilter> Dogs;
+    private IEnumerable<MerchandiseFilter> Cats;
+    private List<string> currentSelection = new();
+    private int[] totals;
+    private PieConfig _config;
+    private Chart _chart;
+    private PieDataset<int> dataset;
+
+    protected override async void OnInitialized()
+    {
+        categories = await API.GetDistinctCategories();
+        currentSelection = categories.ToList();
+        await GetMerchandise();
+        totals = GetItemsFoundPerCategory(categories.ToList());
+        GetItemsFoundPerSearches();
+        DrawPieChart(totals, "", categories.ToList());
+        await GetLineChartData();
+        StateHasChanged();
+    }
+
+    string FormatAsCount(object value)
+    {
+        return ((double)value).ToString();
+    }
+
+    protected void DrawPieChart(int[] data, string title, List<string> labels)
+    {
+        _config = new PieConfig
+        {
+            Options = new PieOptions
+            {
+                Responsive = true,
+                Title = new OptionsTitle
+                {
+                    Display = true,
+                    Text = "Merchandise items returned by searches"
+                }
+            }
+        };
+
+        foreach (string c in labels)
+        {
+            _config.Data.Labels.Add(c);
+        }
+
+        dataset = new PieDataset<int>(data)
+        {
+            BackgroundColor = new[]
+            {
+            ColorUtil.ColorHexString(255, 99, 132),
+            ColorUtil.ColorHexString(255, 205, 86),
+            ColorUtil.ColorHexString(75, 192, 192),
+            ColorUtil.ColorHexString(54, 162, 235),
+            ColorUtil.ColorHexString(54, 162, 0),
+            ColorUtil.ColorHexString(54, 0, 235),
+            ColorUtil.ColorHexString(0, 162, 235),
+            ColorUtil.ColorHexString(54, 20, 0),
+            ColorUtil.ColorHexString(0, 20, 235),
+            }
+        };
+
+        _config.Data.Datasets.Add(dataset);
+    }
 
     protected async Task GetMerchandise()
     {
         merch = await API.GetMerchandiseFilter();
+        totals = GetItemsFoundPerCategory(categories.ToList());
+        StateHasChanged();
+    }
+
+    protected async Task GetLineChartData()
+    {
+        Dogs = await API.GetMerchandiseByCategory("Dog");
+        Cats = await API.GetMerchandiseByCategory("Cat");
+        StateHasChanged();
+    }
+
+    protected async Task PopulateGraph()
+    {
+        string[] colors = new string[currentSelection.Count()];
+        for (int i = 0; i < colors.Length; i++)
+        {
+            colors[i] = ColorUtil.RandomColorString();
+        }
+
+        totals = GetItemsFoundPerCategory(currentSelection);
+
+        dataset = new PieDataset<int>(totals)
+        {
+            BackgroundColor = colors
+        };
+
+        _config.Data.Datasets.Clear();
+        _config.Data.Datasets.Add(dataset);
+        _config.Data.Labels.Clear();
+
+        foreach (string c in currentSelection)
+        {
+            _config.Data.Labels.Add(c);
+        }
+
+        if (_chart != null)
+            await _chart.Update();
+
         StateHasChanged();
     }
 
     protected async Task GetMerchandiseByCategory(ChangeEventArgs e)
     {
-        if(e.Value.ToString() != "All")
+        if (e.Value.ToString() != "All")
+        {
             merch = await API.GetMerchandiseByCategory(e.Value.ToString());
+            currentSelection.Clear();
+            currentSelection.Add(e.Value.ToString());
+            GetItemsFoundPerSearches();
+            await PopulateGraph();
+        }
         else
+        {
             merch = await API.GetMerchandiseFilter();
+            currentSelection = categories.ToList();
+            GetItemsFoundPerSearches();
+            await PopulateGraph();
+        }
 
         StateHasChanged();
     }
@@ -95,9 +285,86 @@ else
         StateHasChanged();
     }
 
-    protected async Task GetSessions()
+    protected int[] GetItemsFoundPerCategory(List<string> list)
     {
-        sessions = await API.GetSessions();
+        int i = 0;
+        int[] sums = new int[list.Count()];
+
+        foreach (var c in list)
+        {
+            var categoryList = merch.ToList().Where(x => x.Category == c);
+            sums[i] = categoryList.Sum(x => x.NumberRecordsReturned);
+            i++;
+        }
+
+        return sums;
+    }
+
+    protected void GetItemsFoundPerSearches()
+    {
+        tableList = new List<returnPerSearch>();
+        returnPerSearch ret;
+
+        foreach (string c in currentSelection)
+        {
+            ret.searchType = c;
+            var categoryList = merch.ToList().Where(x => x.Category == c);
+            ret.searchCount = categoryList.Count();
+            ret.countFound = categoryList.Sum(x => x.NumberRecordsReturned);
+            tableList.Add(ret);
+        }
+
         StateHasChanged();
     }
+
+    protected void ShowSearchData()
+    {
+        showSearchData = true;
+    }
+
+    protected void HideSearchData()
+    {
+        showSearchData = false;
+    }
+
+    protected void ShowGraph()
+    {
+        if (_chart != null)
+            _chart.Update();
+
+        showTable = true;
+        StateHasChanged();
+    }
+
+    protected void HideGraph()
+    {
+        showTable = false;
+    }
+
+    protected void ShowRawData()
+    {
+        showRawData = true;
+        StateHasChanged();
+    }
+
+    protected void HideRawData()
+    {
+        showRawData = false;
+        StateHasChanged();
+    }
+
+    protected int[] GetCategorySearchCount(List<string> list)
+    {
+        int i = 0;
+        int[] sums = new int[list.Count()];
+        foreach (var c in list)
+        {
+            var categoryList = merch.ToList().Where(x => x.Category == c);
+            sums[i] = categoryList.Count();
+            i++;
+        }
+
+        return sums;
+    }
+
 }
