@@ -1,5 +1,58 @@
-﻿<h3>PetFilter</h3>
+﻿@page "/petfilter"
+@inject MonitoringAPIClient API
+
+<h3>Pet Filter</h3>
+<p>This component demonstrates fetching of pet filter metrics.</p>
+
+<p>Filter by criteria 
+    <select class="bold backgroundLightBlue" @onchange="@GetPetCriteria">
+        <option class="bold" value="All">All</option>
+        @foreach (var c in petCriterias)
+        {
+            <option class="bold" value="@c">@c</option>
+        }
+    </select>
+</p>
+
+<p>Filter by value
+    <select class="bold backgroundLightBlue">
+        <option class="bold" value="All">All</option>
+        @foreach (var v in values)
+        {
+            <option class="bold" value="@v">@v</option>
+        }
+    </select>
+</p>
 
 @code {
+    /*
+     * Filter Criteria => Value
+     * Filter Criterias: Category, Breed, Age, Gender
+     * Values: null, Male, Female, Bird, Fish, Reptile, Cat, Dog
+     *
+     * {
+     * "id": 34,
+     * "value": "African Grey",
+     * "filterCriteria": "Breed",
+     * "dateAndTime": "2021-10-20T15:56:54",
+     * "numberRecordsReturned": 1
+     * }
+     *
+     */
+    IEnumerable<string> petCriterias = new List<string>();
+    IEnumerable<string> values = new List<string>();
 
+    protected override async void OnInitialized()
+    {
+        await GetPetCriteria();
+        values = await API.GetDistinctPetFilterValues();
+        StateHasChanged();
+    }
+
+    protected async Task GetPetCriteria()
+    {
+        petCriterias = await API.GetDistinctPetFilterCriteria();
+
+
+    }
 }
