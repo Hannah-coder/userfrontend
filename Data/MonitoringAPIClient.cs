@@ -68,7 +68,7 @@ namespace PetShopMetrics
 
             var responseContent = await response.Content.ReadAsAsync<IEnumerable<MerchandiseFilter>>();
 
-            return responseContent.ToList().Where(x => x.DateAndTime.Date >= start.Date && x.DateAndTime.Date <= end.Date);
+            return responseContent.ToList().Where(x => x.DateAndTime.Date >= start.Date && x.DateAndTime.Date <= end);
         }
 
         /////////////////////////////////////////////////////////// Session //////////////////////////////////////////////
