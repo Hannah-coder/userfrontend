@@ -4,134 +4,142 @@
 @using System.Globalization
 @using Radzen.Blazor
 @inject MonitoringAPIClient API
+<AuthorizeView>
+    <Authorized>
+        <h1>Merchandise Filter and Chart Demonstration</h1>
 
-<h1>Merchandise Filter and Chart Demonstration</h1>
+        <p>This component demonstrates fetching data from a service.</p>
+        <p>
+            Filter by category
+            <select class="bold backgroundLightBlue" @onchange="@GetMerchandiseByCategory">
+                <option class="bold" value="All">All</option>
+                @if (categories != null)
+                {
+                    @foreach (var c in categories)
+                    {
+                        <option class="bold" value=@c>@c</option>
+                    }
+                }
+            </select>
+        </p>
+        <p>
+            Filter by Month
+            <select class="bold backgroundLightBlue" @onchange="@GetMerchandiseByMonth">
+                <option class="bold" value="0">Select a Month</option>
+                <option class="bold" value=1>1</option>
+                <option class="bold" value=2>2</option>
+                <option class="bold" value=3>3</option>
+                <option class="bold" value=4>4</option>
+                <option class="bold" value=5>5</option>
+                <option class="bold" value=6>6</option>
+                <option class="bold" value=7>7</option>
+                <option class="bold" value=8>8</option>
+                <option class="bold" value=9>9</option>
+                <option class="bold" value=10>10</option>
+                <option class="bold" value=11>11</option>
+                <option class="bold" value=12>12</option>
+            </select>
+        </p>
 
-<p>This component demonstrates fetching data from a service.</p>
-<p>
-    Filter by category
-    <select class="bold backgroundLightBlue" @onchange="@GetMerchandiseByCategory">
-        <option class="bold" value="All">All</option>
-        @if (categories != null)
+        <p>
+            <button class="btn btn-success boldBrownButton" @onclick="ShowGraph">Show Graph</button> &nbsp &nbsp &nbsp
+            <button class="btn btn-success boldBrownButton" @onclick="HideGraph">Hide Graph</button>
+        </p>
+
+        @if (_config != null && showTable == true)
         {
-            @foreach (var c in categories)
-            {
-                <option class="bold" value=@c>@c</option>
-            }
+            <Chart Config="_config" @ref="_chart"></Chart>
         }
-    </select>
-</p>
-<p>
-    Filter by Month
-    <select class="bold backgroundLightBlue" @onchange="@GetMerchandiseByMonth">
-        <option class="bold" value="0">Select a Month</option>
-        <option class="bold" value=1>1</option>
-        <option class="bold" value=2>2</option>
-        <option class="bold" value=3>3</option>
-        <option class="bold" value=4>4</option>
-        <option class="bold" value=5>5</option>
-        <option class="bold" value=6>6</option>
-        <option class="bold" value=7>7</option>
-        <option class="bold" value=8>8</option>
-        <option class="bold" value=9>9</option>
-        <option class="bold" value=10>10</option>
-        <option class="bold" value=11>11</option>
-        <option class="bold" value=12>12</option>
-    </select>
-</p>
 
-<p>
-    <button class="btn btn-success boldBrownButton" @onclick="ShowGraph">Show Graph</button> &nbsp &nbsp &nbsp
-    <button class="btn btn-success boldBrownButton" @onclick="HideGraph">Hide Graph</button>
-</p>
+        <p>
+            <button class="btn btn-success boldBrownButton" @onclick="ShowRawData">Show Raw Data</button> &nbsp &nbsp &nbsp
+            <button class="btn btn-success boldBrownButton" @onclick="HideRawData">Hide Raw Data</button>
+        </p>
 
-@if (_config != null && showTable == true)
-{
-    <Chart Config="_config" @ref="_chart"></Chart>
-}
+        @if (showRawData == false)
+        {
 
-<p>
-    <button class="btn btn-success boldBrownButton" @onclick="ShowRawData">Show Raw Data</button> &nbsp &nbsp &nbsp
-    <button class="btn btn-success boldBrownButton" @onclick="HideRawData">Hide Raw Data</button>
-</p>
+        }
+        else
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Category</th>
+                        <th>Date</th>
+                        <th>Items found</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in merch)
+                    {
+                        <tr>
+                            <td>@item.Id.ToString()</td>
+                            <td>@item.Category</td>
+                            <td>@item.DateAndTime</td>
+                            <td>@item.NumberRecordsReturned</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
 
-@if (showRawData == false)
-{
+        <button class="btn btn-success boldBrownButton" @onclick="ShowSearchData">Show Search Data</button> &nbsp &nbsp &nbsp
+        <button class="btn btn-success boldBrownButton" @onclick="HideSearchData">Hide Search Data</button>
 
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Category</th>
-                <th>Date</th>
-                <th>Items found</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in merch)
-            {
-                <tr>
-                    <td>@item.Id.ToString()</td>
-                    <td>@item.Category</td>
-                    <td>@item.DateAndTime</td>
-                    <td>@item.NumberRecordsReturned</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+        @if (showSearchData == false)
+        {
 
-<button class="btn btn-success boldBrownButton" @onclick="ShowSearchData">Show Search Data</button> &nbsp &nbsp &nbsp
-<button class="btn btn-success boldBrownButton" @onclick="HideSearchData">Hide Search Data</button>
-
-@if (showSearchData == false)
-{
-
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Category</th>
-                <th>Times Searched</th>
-                <th>Total Items Found</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in tableList)
-            {
-                <tr>
-                    <td>@item.searchType</td>
-                    <td>@item.searchCount</td>
-                    <td>@item.countFound</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
-<div class="container">
-    <div class="row">
-        <div class="col-sm-12 my-5">
-            <RadzenChart>
-                <RadzenLineSeries Smooth=false Data="@Dogs" CategoryProperty="DateAndTime" Title="Dogs" LineType="LineType.Dashed" ValueProperty="NumberRecordsReturned">
-                    <RadzenMarkers MarkerType="MarkerType.Circle" />
-                </RadzenLineSeries>
-                <RadzenLineSeries Smooth=false Data="@Cats" CategoryProperty="DateAndTime" Title="Cats" ValueProperty="NumberRecordsReturned">
-                    <RadzenMarkers MarkerType="MarkerType.Circle" />
-                </RadzenLineSeries>
-                <RadzenCategoryAxis Padding="20" FormatString="{0:D:H:mm:ss}" />
-                <RadzenValueAxis Formatter="@FormatAsCount">
-                    <RadzenGridLines Visible="true" />
-                    <RadzenAxisTitle Text="Search Count" />
-                </RadzenValueAxis>
-            </RadzenChart>
+        }
+        else
+        {
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Times Searched</th>
+                        <th>Total Items Found</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in tableList)
+                    {
+                        <tr>
+                            <td>@item.searchType</td>
+                            <td>@item.searchCount</td>
+                            <td>@item.countFound</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-12 my-5">
+                    <RadzenChart>
+                        <RadzenLineSeries Smooth=false Data="@Dogs" CategoryProperty="DateAndTime" Title="Dogs" LineType="LineType.Dashed" ValueProperty="NumberRecordsReturned">
+                            <RadzenMarkers MarkerType="MarkerType.Circle" />
+                        </RadzenLineSeries>
+                        <RadzenLineSeries Smooth=false Data="@Cats" CategoryProperty="DateAndTime" Title="Cats" ValueProperty="NumberRecordsReturned">
+                            <RadzenMarkers MarkerType="MarkerType.Circle" />
+                        </RadzenLineSeries>
+                        <RadzenCategoryAxis Padding="20" FormatString="{0:D:H:mm:ss}" />
+                        <RadzenValueAxis Formatter="@FormatAsCount">
+                            <RadzenGridLines Visible="true" />
+                            <RadzenAxisTitle Text="Search Count" />
+                        </RadzenValueAxis>
+                    </RadzenChart>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
+    </Authorized>
+    <NotAuthorized>
+        <h3>Access Denied</h3>
+        <p>Please contact an administrator.</p>
+    </NotAuthorized>
+</AuthorizeView>
+
 
 @code {
 
